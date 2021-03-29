@@ -13,10 +13,10 @@ class Word: NSObject, NSCoding {
     var count: Int
     var pinned: Bool
     
-    init(word: String, count: Int){
+    init(word: String, count: Int, pinned: Bool){
         self.word = word
         self.count = count
-        self.pinned = false
+        self.pinned = pinned
     }
     
     //MARK- Types
@@ -47,7 +47,7 @@ class Word: NSObject, NSCoding {
         let count = aDecoder.decodeInteger(forKey: PropertyKey.count)
         let pinned = aDecoder.decodeBool(forKey: PropertyKey.pinned)
         
-        self.init(word: word, count: count) //since it's a convenience init, it must call
+        self.init(word: word, count: count, pinned: pinned) //since it's a convenience init, it must call
         //the designated init
     }
     

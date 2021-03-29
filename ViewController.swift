@@ -10,8 +10,8 @@ import Speech
 import os.log
 
 //data storing vars
-var wordsDict = [String:Int]()
-var sortedWordsDict = [(String, Int)]()
+var wordsDict = [String:Word]()
+var sortedWordsDict = [(String,Word)]() //sorting wordsDict returns tuple array
 var allWords = [Word]()
 var tempWords = [Word]()
 
@@ -38,6 +38,12 @@ let lightblue = UIColor(red: CGFloat(0.545), green: CGFloat(0.851), blue: CGFloa
 let backorange = UIColor(red: CGFloat(1), green: CGFloat(0.690), blue: CGFloat(0.227), alpha: CGFloat(1))
 let cellorange = UIColor(red: CGFloat(0.901), green: CGFloat(0.8117), blue: CGFloat(0.8117), alpha: CGFloat(0.75))
 let taborange = UIColor(red: CGFloat(1), green: CGFloat(0.9607), blue: CGFloat(0.8509), alpha: CGFloat(1))
+
+
+//boolean extension
+extension Bool{
+    var boolValue: Int{self ? 1:0} //assigns 1 if self- the bool being referenced- is true; else 0 if false
+}
 
 
 class ViewController: UIViewController, SFSpeechRecognizerDelegate {
@@ -230,20 +236,7 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
                     print("completed buffer")
                     
                     self.addToDictionary(wordNames: bufferText)
-                    
-                    sortedWordsDict = wordsDict.sorted {
-                        return $0.value > $1.value
-                    }
-                    
-                    allWords = [] //reset the array to reload words
-                    
-                    for (wordKey, countValue) in sortedWordsDict{
-                        allWords.append(Word(word: wordKey, count: countValue))
-                    }
-                    
-                    self.saveWords() //saves allWords list to file
-                    
-                    tempWords = Array(allWords.prefix(numWords)) //only show first 50 words
+                    self.populateTempWords()
                     
                     wordsColl.reloadData()
 //
@@ -282,16 +275,44 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         
     }
     
+    //sorts based first on whether word is pinned (true first, false last), and then on the count of the word.
+    func sortDictionary() -> [(String, Word)]{
+            
+        return wordsDict.sorted (by: {
+            return ($0.value.pinned.boolValue, $0.value.count) > ($1.value.pinned.boolValue, $1.value.count)
+        })
+        
+    }
+    
+    func populateTempWords(){
+        sortedWordsDict = self.sortDictionary()
+        
+        allWords = [] //reset the array to reload words
+        
+        for (wordKey, wordObj) in sortedWordsDict{
+            allWords.append(wordObj)
+        }
+        
+        self.saveWords() //saves allWords list to file
+        
+        tempWords = Array(allWords.prefix(numWords)) //only show first 50 words
+    }
+    
+    
     func addToDictionary(wordNames:[String]?){
         if let wordNames = wordNames{
             for wordName in wordNames{
                 var fixedWordName = wordName.lowercased()
-                fixedWordName.removeAll(where: {$0.isPunctuation})
-                if wordsDict[fixedWordName] != nil{ //if the key already exists, add one to it
-                    wordsDict.updateValue(wordsDict[fixedWordName]! + 1, forKey: fixedWordName)
+                
+                fixedWordName.removeAll(where: {$0.isPunctuation}) //get rid of all punctuation
+                
+                let word = wordsDict[fixedWordName]
+                if word != nil{ //if the key already exists, add one to the value's .count field
+                    
+                    wordsDict.updateValue(Word(word: fixedWordName, count: word!.count + 1, pinned: word!.pinned), forKey: fixedWordName)
                 }
                 else{
-                    wordsDict[fixedWordName] = 1 //else create the key with value 1
+                    wordsDict[fixedWordName] = Word(word: fixedWordName, count: 1, pinned: false) //else create the key with word.count value 1
                 }
             }
         }
@@ -300,15 +321,18 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
     func addWordListToDictionary(words: [Word]?){
         if let words = words{
             for word in words{
-                if wordsDict[word.word.lowercased()] != nil{ //if the key already exists, add one to it
-                    wordsDict.updateValue(wordsDict[word.word.lowercased()]! + word.count, forKey: word.word.lowercased())
+                let fixedWordName = word.word.lowercased()
+                
+                if wordsDict[fixedWordName] != nil{ //if the key already exists, add the stored value to the current value
+                    wordsDict.updateValue(Word(word: fixedWordName, count: wordsDict[fixedWordName]!.count + word.count, pinned: word.pinned), forKey: fixedWordName)
                 }
                 else{
-                    wordsDict[word.word.lowercased()] = word.count //else create the key with value 1
+                    wordsDict[fixedWordName] = Word(word: fixedWordName, count: word.count, pinned: word.pinned) //else create the key with the stored value
                 }
             }
         }
     }
+    
     
     @objc func goToHome(){
         let homeView = ViewController()
@@ -386,11 +410,6 @@ extension ViewController: UICollectionViewDataSource{
         
         wordCell.delegate = self
         
-//        wordCell.starredTapAction = { () in
-//            print("edit in cell ", indexPath.item)
-//            tempWords[indexPath.item].pinned = true //mark the word as pinned.
-//        }
-        
         wordCell.configure(word: tempWords[indexPath.item])
         return wordCell
     }
@@ -445,14 +464,18 @@ extension ViewController: WordCellDelegate{
         if(wasPressedOnCell.isStarred){ //if the button has already been starred, unstar it
             wasPressedOnCell.starButton.setImage(UIImage(named: "unfilled_star.png"), for: .normal)
             wasPressedOnCell.isStarred = false
+            wordsDict[wasPressedOnCell.wordName.text!]!.pinned = false //set the pinned value to true
+
         }
         
         else{ //else, star the button
             wasPressedOnCell.starButton.setImage(UIImage(named: "filled_star.png"), for: .normal)
             wasPressedOnCell.isStarred = true
+            wordsDict[wasPressedOnCell.wordName.text!]!.pinned = true //set the pinned value to true
+
         }
         
-        
-        //wasPressedOnCell.wordName
+        populateTempWords()
+        wordsColl.reloadData()
     }
 }
