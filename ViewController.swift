@@ -276,7 +276,7 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
     }
     
     //sorts based first on whether word is pinned (true first, false last), and then on the count of the word.
-    func sortDictionary() -> [(String, Word)]{
+    func sortDictionaryPinned() -> [(String, Word)]{
             
         return wordsDict.sorted (by: {
             return ($0.value.pinned.boolValue, $0.value.count) > ($1.value.pinned.boolValue, $1.value.count)
@@ -285,7 +285,7 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
     }
     
     func populateTempWords(){
-        sortedWordsDict = self.sortDictionary()
+        sortedWordsDict = self.sortDictionaryPinned()
         
         allWords = [] //reset the array to reload words
         
@@ -296,6 +296,7 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         self.saveWords() //saves allWords list to file
         
         tempWords = Array(allWords.prefix(numWords)) //only show first 50 words
+        print(tempWords)
     }
     
     

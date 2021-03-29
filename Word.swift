@@ -19,6 +19,10 @@ class Word: NSObject, NSCoding {
         self.pinned = pinned
     }
     
+    
+    public override var description: String { return "Word Name: \(word) Word Count: \(count) Pinned: \(pinned)" }
+    
+    
     //MARK- Types
     struct PropertyKey{
         //each key stores a data value of Word

@@ -46,8 +46,8 @@ class WordCell: UICollectionViewCell {
         wordCount.backgroundColor = .clear
         contentView.addSubview(wordCount)
         
+        
         starButton = UIButton()
-        starButton.setImage(UIImage(named: "unfilled_star.png"), for: .normal)
         starButton.translatesAutoresizingMaskIntoConstraints = false
         starButton.addTarget(self, action: #selector(starred), for: .touchUpInside)
         contentView.addSubview(starButton)
@@ -115,7 +115,7 @@ class WordCell: UICollectionViewCell {
             starButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 2.2*verticalPadding),
             starButton.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -1.8*verticalPadding),
             starButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8*horizontalPadding),
-            starButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4.5*horizontalPadding),
+            starButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4.65*horizontalPadding),
             
         
                                         
@@ -125,6 +125,13 @@ class WordCell: UICollectionViewCell {
     func configure(word: Word){
         wordName.text = word.word
         wordCount.text = String(word.count)
+        
+        isStarred = word.pinned
+        if isStarred{
+            starButton.setImage(UIImage(named: "filled_star.png"), for: .normal)
+        } else{
+            starButton.setImage(UIImage(named: "unfilled_star.png"), for: .normal)
+        }
     }
 }
 
