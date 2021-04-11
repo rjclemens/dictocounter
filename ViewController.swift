@@ -296,7 +296,6 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         self.saveWords() //saves allWords list to file
         
         tempWords = Array(allWords.prefix(numWords)) //only show first 50 words
-        print(tempWords)
     }
     
     
@@ -336,8 +335,18 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
     
     
     @objc func goToHome(){
-        let homeView = ViewController()
-        navigationController?.pushViewController(homeView, animated: true)
+        
+        print("implement later")
+        
+//        let currentViewController = UIApplication.shared.keyWindow?.rootViewController
+//        print("\(currentViewController)  -------------------")
+//        if currentViewController is ViewController{
+//            print("already in ViewController")
+//        }
+//
+//        else{
+//            navigationController?.pushViewController(homeView, animated: true)
+//        }
     }
     
     @objc func goToGraph(){
@@ -353,6 +362,9 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         
         //attempts to save allWords Word array to the URL path (where data is saved for the app in the iPhone
         //returns true if the save is successful, false otherwise
+        
+        //clear the file before resaving
+        deleteAllData()
         let isSuccessfulSave = NSKeyedArchiver.archiveRootObject(allWords, toFile: Word.ArchiveURL.path)
         
         if isSuccessfulSave {
