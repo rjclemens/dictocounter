@@ -65,14 +65,15 @@ class GraphViewController: UIViewController {
     var graphs: [LineChartView] = []
     var graphReuseID = "graph"
     
-    let dataPts = 50
+    let dataPts = 75
     var yValues: [ChartDataEntry] = []
     var yValuesScaled: [ChartDataEntry] = []
     var allWordsNoPins: [Word] = []
-    var points = Array(repeating: Array(repeating: 0.0, count: 2), count: 50)
+    var points = Array(repeating: Array(repeating: 0.0, count: 2), count: 75)
     var regressedValues: [ChartDataEntry] = []
     var learningRate = 0.001
-    var numIterations = 10000
+    var numIterations = 15000
+    var realDataPts = -1
     
     
     override func viewDidLoad() {
@@ -103,12 +104,6 @@ class GraphViewController: UIViewController {
 
         view.addSubview(graphColl)
         
-        //graph views
-//        view.addSubview(lineChartViewZipf)
-//        lineChartViewZipf.centerInSuperview()
-//        lineChartViewZipf.width(to: view)
-//        lineChartViewZipf.heightToWidth(of: view)
-
     }
     
     func setUpGraphs(){
@@ -152,10 +147,8 @@ class GraphViewController: UIViewController {
     func assignDataZipf(){
         setUpTempWords()
         
-        let dataValues = allWordsNoPins
-        
-        for i in 0...dataPts-1{
-            yValues.append(ChartDataEntry(x: Double(i), y: Double(dataValues[i].count)))
+        for i in 0...realDataPts-1{
+            yValues.append(ChartDataEntry(x: Double(i), y: Double(allWordsNoPins[i].count)))
         }
         
     }
@@ -189,18 +182,14 @@ class GraphViewController: UIViewController {
     }
     
     func assignDataZipfScaled(){
-        setUpTempWords()
+        //setUpTempWords() already done in nonscaled version
         
-        let dataValues = allWordsNoPins
-        
-        for i in 0...dataPts-1{
-            yValuesScaled.append(ChartDataEntry(x: Double(i), y: log10(Double(dataValues[i].count))))
+        for i in 0...realDataPts-1{
+            yValuesScaled.append(ChartDataEntry(x: Double(i), y: log10(Double(allWordsNoPins[i].count))))
             points[i][0] = Double(i)
-            points[i][1] = log10(Double(dataValues[i].count)) //word count
+            points[i][1] = log10(Double(allWordsNoPins[i].count)) //word count
         }
         
-        //let guess_m = Double(-1/20)
-        //let guess_b = Double(dataValues[dataPts-1].count)
         
         let guess_m = 0.0
         let guess_b = 0.0
@@ -208,12 +197,12 @@ class GraphViewController: UIViewController {
         let regressionValues = LinearRegression.descent(points: points, starting_m: guess_m, starting_b: guess_b, learningRate: learningRate, numIterations: numIterations)
         
         print(regressionValues[0], regressionValues[1])
-        for i in 0...dataPts-1{
+        
+        for i in 0...realDataPts-1{
             regressedValues.append(ChartDataEntry(x: Double(i), y: regressionValues[0]*Double(i) + regressionValues[1]))
             //data set: (x, mx+b)
         }
         
-        print(regressedValues)
         
     }
     
@@ -229,6 +218,10 @@ class GraphViewController: UIViewController {
                 break
             }
         }
+        
+        let dataValuesCount = allWordsNoPins.count
+        realDataPts = (dataValuesCount > dataPts) ? dataPts : dataValuesCount //in case we dont have 75 words
+        
     }
     
     func sortDictionaryWithoutPins() -> [(String, Word)]{

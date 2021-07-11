@@ -23,6 +23,7 @@ public class LinearRegression{
         var b_gradient = 0.0
         var m_gradient = 0.0
         
+        let previous_error = computeError(m: m_current, b: b_current, points: points)
         let N = Double(points.count)
         //print(N)
         
@@ -48,19 +49,33 @@ public class LinearRegression{
         let new_m = m_current - (learningRate * m_gradient)
         let new_b = b_current - (learningRate * b_gradient)
         
-        return [new_m, new_b]
+        let new_error = computeError(m: new_m, b: new_b, points: points)
+        
+        return [new_m, new_b, previous_error, new_error]
     }
     
     class func descent(points: [[Double]], starting_m: Double, starting_b: Double, learningRate: Double, numIterations: Int) -> [Double]{
+        
+        var modifiable_learning_rate = learningRate
         var b = starting_b
         var m = starting_m
         
         for _ in 0...numIterations{
-            m = stepGradient(m_current: m, b_current: b, points: points, learningRate: learningRate)[0]
-            b = stepGradient(m_current: m, b_current: b, points: points, learningRate: learningRate)[1]
+            let outputs = stepGradient(m_current: m, b_current: b, points: points, learningRate: modifiable_learning_rate)
+            m = outputs[0]
+            b = outputs[1]
             
-            //print(m, b)
+            if outputs[3] > outputs[2]{ //if the revised/new error is larger than previous error, reduce learning rate
+                //print("oooooo problem")
+                modifiable_learning_rate /= 2
+            }
+            else{
+                modifiable_learning_rate *= 1.05
+            } //0.00027820154226527674 with
+            
         }
+        
+        print(modifiable_learning_rate, learningRate)
         
         return [m,b]
     }

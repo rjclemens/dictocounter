@@ -1,13 +1,12 @@
-//
 //  ViewController.swift
 //  DictoCounter
 //
 //  Created by Raleigh Clemens on 3/20/21.
 //
-
 import UIKit
 import Speech
 import os.log
+import AVFoundation
 
 //data storing vars
 var wordsDict = [String:Word]()
@@ -67,10 +66,13 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         let speechRecognizer = SFSpeechRecognizer()
         requestDictAccess();
         
+        print("hello")
+        
         if speechRecognizer!.isAvailable { //if the user has granted permission
             speechRecognizer?.supportsOnDeviceRecognition = true //for offline data
             
             recognizeAudioStream()
+            print("reg")
         }
         
         setUpViews()
@@ -182,41 +184,52 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
     }
 
     
+    
     func recognizeAudioStream() {
         let speechRecognizer = SFSpeechRecognizer()
-        
+
         //performs speech recognition on live audio; as audio is captured, call append
         //to request object, call endAudio() to end speech recognition
         var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-        
+
         //determines & edits state of speech recognition task (end, start, cancel, etc)
         var recognitionTask: SFSpeechRecognitionTask?
-        
+
         let audioEngine = AVAudioEngine()
-        
-        
+
+
         func startRecording() throws{
-            
+
             //cancel previous audio task
             recognitionTask?.cancel()
             recognitionTask = nil
-            
+
+            print("here2")
             //get info from microphone
             let audioSession = AVAudioSession.sharedInstance()
+            print("here2-")
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+            print("here2--")
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            
+            print("here2----")
+
+            print("here2")
             let inputNode = audioEngine.inputNode
-            
+            print("here3")
+
             //audio buffer; takes a continuous input of audio and recognizes speech
             recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+            print("here4")
             //allows device to print results of your speech before you're done talking
             recognitionRequest?.shouldReportPartialResults = true
-            
-            
+            print("here5")
+
+
             recognitionTask = speechRecognizer!.recognitionTask(with: recognitionRequest!) {result, error in
-                
+
                 var isFinal = false
+                
+                print("here")
                 
                 if let result = result{ //if we can let result be the nonoptional version of result, then
                     isFinal = result.isFinal
@@ -447,6 +460,7 @@ extension ViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.text = ""
         searchBar.showsCancelButton = false
+        view.endEditing(true)
         tempWords = Array(allWords.prefix(numWords)) //only show first 50 words
         wordsColl.reloadData()
     }
@@ -478,14 +492,12 @@ extension ViewController: WordCellDelegate{
             wasPressedOnCell.starButton.setImage(UIImage(named: "unfilled_star.png"), for: .normal)
             wasPressedOnCell.isStarred = false
             wordsDict[wasPressedOnCell.wordName.text!]!.pinned = false //set the pinned value to true
-
         }
         
         else{ //else, star the button
             wasPressedOnCell.starButton.setImage(UIImage(named: "filled_star.png"), for: .normal)
             wasPressedOnCell.isStarred = true
             wordsDict[wasPressedOnCell.wordName.text!]!.pinned = true //set the pinned value to true
-
         }
         
         populateTempWords()
