@@ -8,6 +8,7 @@ import Speech
 import os.log
 import AVFoundation
 
+
 //data storing vars
 var wordsDict = [String:Word]()
 var sortedWordsDict = [(String,Word)]() //sorting wordsDict returns tuple array
@@ -24,6 +25,7 @@ let padding = CGFloat(10)
 //buttons
 var homeButton: UIButton!
 var graphButton: UIButton!
+var profButton: UIButton!
 
 let numWords = 100
 
@@ -38,6 +40,8 @@ let backorange = UIColor(red: CGFloat(1), green: CGFloat(0.690), blue: CGFloat(0
 let cellorange = UIColor(red: CGFloat(0.901), green: CGFloat(0.8117), blue: CGFloat(0.8117), alpha: CGFloat(0.75))
 let taborange = UIColor(red: CGFloat(1), green: CGFloat(0.9607), blue: CGFloat(0.8509), alpha: CGFloat(1))
 
+let searchColor = UIColor(red: CGFloat(202/255), green: CGFloat(193/255), blue: CGFloat(165/266), alpha: CGFloat(0.8))
+let bkgrdColor = UIColor(red: CGFloat(192/255), green: CGFloat(219/255), blue: CGFloat(220/266), alpha: CGFloat(1))
 
 //boolean extension
 extension Bool{
@@ -61,18 +65,16 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         addWordListToDictionary(words: allWords)
         tempWords = Array(allWords.prefix(numWords)) //only show first 50 words
         
-        view.backgroundColor = .white
+        view.backgroundColor = bkgrdColor
         
         let speechRecognizer = SFSpeechRecognizer()
         requestDictAccess();
         
-        print("hello")
         
         if speechRecognizer!.isAvailable { //if the user has granted permission
             speechRecognizer?.supportsOnDeviceRecognition = true //for offline data
             
             recognizeAudioStream()
-            print("reg")
         }
         
         setUpViews()
@@ -107,6 +109,7 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         wordsSearch.placeholder = "Search for a word..."
         wordsSearch.prompt = "Yes, we're stealing your data! ;)"
         wordsSearch.translatesAutoresizingMaskIntoConstraints = false
+        wordsSearch.backgroundColor = searchColor
         view.addSubview(wordsSearch)
         
         tabChanger = UIView(frame: .zero)
@@ -116,23 +119,29 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         
         
         homeButton = UIButton()
-        homeButton.setImage(UIImage(named: "unfilled_star.png"), for: .normal)
+        homeButton.setImage(UIImage(named: "homebutton.png"), for: .normal)
         homeButton.translatesAutoresizingMaskIntoConstraints = false
         homeButton.addTarget(self, action: #selector(goToHome), for: .touchUpInside)
         tabChanger.addSubview(homeButton)
         
         graphButton = UIButton()
-        graphButton.setImage(UIImage(named: "filled_star.png"), for: .normal)
+        graphButton.setImage(UIImage(named: "graphbutton.png"), for: .normal)
         graphButton.translatesAutoresizingMaskIntoConstraints = false
         graphButton.addTarget(self, action: #selector(goToGraph), for: .touchUpInside)
         tabChanger.addSubview(graphButton)
+        
+        profButton = UIButton()
+        profButton.setImage(UIImage(named: "profbutton.png"), for: .normal)
+        profButton.translatesAutoresizingMaskIntoConstraints = false
+        profButton.addTarget(self, action: #selector(goToProf), for: .touchUpInside)
+        tabChanger.addSubview(profButton)
         
 
     }
     
     func setUpConstraints(){
         NSLayoutConstraint.activate([
-            wordsColl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 95),
+            wordsColl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 75),
             wordsColl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -50),
             wordsColl.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             wordsColl.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
@@ -152,8 +161,12 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
             graphButton.leadingAnchor.constraint(equalTo: homeButton.trailingAnchor, constant: padding*4),
             graphButton.trailingAnchor.constraint(equalTo: tabChanger.trailingAnchor, constant: -25*padding),
             
+            profButton.topAnchor.constraint(equalTo: tabChanger.topAnchor, constant: padding/2),
+            profButton.bottomAnchor.constraint(equalTo: tabChanger.bottomAnchor, constant: -padding/2),
+            profButton.leadingAnchor.constraint(equalTo: tabChanger.trailingAnchor, constant: -7*padding),
+            profButton.trailingAnchor.constraint(equalTo: tabChanger.trailingAnchor, constant: -3*padding),
             
-            wordsSearch.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            wordsSearch.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             wordsSearch.bottomAnchor.constraint(equalTo: wordsColl.topAnchor, constant: -20),
             wordsSearch.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             wordsSearch.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
@@ -204,32 +217,29 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
             recognitionTask?.cancel()
             recognitionTask = nil
 
-            print("here2")
             //get info from microphone
             let audioSession = AVAudioSession.sharedInstance()
-            print("here2-")
+            
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
-            print("here2--")
+            
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            print("here2----")
+            
 
-            print("here2")
+            
             let inputNode = audioEngine.inputNode
-            print("here3")
+            
 
             //audio buffer; takes a continuous input of audio and recognizes speech
             recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-            print("here4")
+            
             //allows device to print results of your speech before you're done talking
             recognitionRequest?.shouldReportPartialResults = true
-            print("here5")
-
+        
 
             recognitionTask = speechRecognizer!.recognitionTask(with: recognitionRequest!) {result, error in
 
                 var isFinal = false
                 
-                print("here")
                 
                 if let result = result{ //if we can let result be the nonoptional version of result, then
                     isFinal = result.isFinal
@@ -366,6 +376,10 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
         print("pressed")
         let graphView = GraphViewController()
         navigationController?.pushViewController(graphView, animated: true)
+    }
+    
+    @objc func goToProf(){
+        print("going to profile")
     }
     
     
