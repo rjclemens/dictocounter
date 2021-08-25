@@ -61,13 +61,26 @@ class GraphViewController: UIViewController {
         return chartView
     }()
     
+    lazy var pieChartView: PieChartView = {
+        let pieChart = PieChartView()
+        pieChart.backgroundColor = .systemBlue
+        
+        return pieChart
+    }()
+    
     var graphColl: UICollectionView!
-    var graphs: [LineChartView] = []
+    var viewTitle: UILabel!
+    var linegraphs: [LineChartView] = []
+    var piegraphs: [PieChartView] = []
+    var graphs: [ChartViewBase] = []
     var graphReuseID = "graph"
     
     let dataPts = 75
+    let pieDataPts = 8
     var yValues: [ChartDataEntry] = []
     var yValuesScaled: [ChartDataEntry] = []
+    var pieDataEntries: [PieChartDataEntry] = []
+    var xValuesPie: [String] = []
     var allWordsNoPins: [Word] = []
     var points = Array(repeating: Array(repeating: 0.0, count: 2), count: 75)
     var regressedValues: [ChartDataEntry] = []
@@ -75,6 +88,7 @@ class GraphViewController: UIViewController {
     var numIterations = 15000
     var realDataPts = -1
     
+    let bkgrdColor = UIColor(red: CGFloat(192/255), green: CGFloat(219/255), blue: CGFloat(220/266), alpha: CGFloat(1))
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -86,6 +100,7 @@ class GraphViewController: UIViewController {
         setUpConstraints()
         
     }
+    
     
     func setUpViews(){
         let layout = UICollectionViewFlowLayout()
@@ -100,9 +115,14 @@ class GraphViewController: UIViewController {
         //must register GraphCell class before calling dequeueReusableCell
         graphColl.register(GraphCell.self, forCellWithReuseIdentifier: graphReuseID)
         
-        graphColl.backgroundColor = .white
-
+        graphColl.backgroundColor = bkgrdColor
         view.addSubview(graphColl)
+        
+        viewTitle = UILabel()
+        viewTitle.text = "Graphs"
+        viewTitle.translatesAutoresizingMaskIntoConstraints = false
+        viewTitle.backgroundColor = bkgrdColor
+        view.addSubview(viewTitle)
         
     }
     
@@ -110,16 +130,28 @@ class GraphViewController: UIViewController {
         
         assignDataZipf()
         setDataZipf()
-        graphs.append(lineChartViewZipf)
+        linegraphs.append(lineChartViewZipf)
         
         assignDataZipfScaled()
         setDataZipfScaled()
-        graphs.append(lineChartViewZipfScaled)
+        linegraphs.append(lineChartViewZipfScaled)
+        
+        assignPieChart()
+        setPieChart()
+        piegraphs.append(pieChartView)
+        
+        graphs = linegraphs + piegraphs
+        
     }
     
     func setUpConstraints(){
         NSLayoutConstraint.activate([
-            graphColl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+//            viewTitle.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+//            viewTitle.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 15),
+//            viewTitle.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+//            viewTitle.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            
+            graphColl.topAnchor.constraint(equalTo: viewTitle.bottomAnchor),
             graphColl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             graphColl.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             graphColl.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
@@ -144,6 +176,34 @@ class GraphViewController: UIViewController {
         lineChartViewZipf.data = data
     }
     
+    func assignPieChart(){
+        setUpTempWords()
+        
+        for i in 0..<pieDataPts {
+            pieDataEntries.append(PieChartDataEntry(value: Double(allWordsNoPins[i].count), label: allWordsNoPins[i].word))
+            xValuesPie.append(allWordsNoPins[i].word)
+        }
+        
+    }
+    
+    func setPieChart(){
+        let pieChartDataSet = PieChartDataSet(entries: pieDataEntries)
+        let pieChartData = PieChartData(dataSet: pieChartDataSet)
+        pieChartView.data = pieChartData
+        
+        var colors: [UIColor] = []
+            
+        for _ in 0..<pieDataPts {
+          let red = Double(arc4random_uniform(200))
+          let green = Double(arc4random_uniform(200))
+          let blue = Double(arc4random_uniform(200))
+            
+          let color = UIColor(red: CGFloat(red/255), green: CGFloat(green/255), blue: CGFloat(blue/255), alpha: 1)
+          colors.append(color)
+        }
+        pieChartDataSet.colors = colors
+    }
+
     func assignDataZipf(){
         setUpTempWords()
         
@@ -154,7 +214,7 @@ class GraphViewController: UIViewController {
     }
     
     func setDataZipfScaled(){
-        let set1 = LineChartDataSet(entries: yValuesScaled, label: "Word Frequency")
+        let set1 = LineChartDataSet(entries: yValuesScaled, label: "LOG(Word Frequency)")
         
         //linear regression set
         let set2 = LineChartDataSet(entries: regressedValues, label: "Linear Regression")
@@ -235,7 +295,7 @@ class GraphViewController: UIViewController {
 
 extension GraphViewController: ChartViewDelegate{
     func chartValueSelected(_ chartView: ChartViewBase, entry: ChartDataEntry, highlight: Highlight) {
-        print(entry)
+        print("ENTRYY: ", entry)
     }
 }
 
@@ -254,7 +314,7 @@ extension GraphViewController: UICollectionViewDelegateFlowLayout{
 extension GraphViewController: UICollectionViewDataSource{
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         
-        return graphs.count //total number of entries
+        return linegraphs.count + piegraphs.count //total number of graphs
     }
     
     
