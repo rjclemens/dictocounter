@@ -380,6 +380,8 @@ class ViewController: UIViewController, SFSpeechRecognizerDelegate {
     
     @objc func goToProf(){
         print("going to profile")
+        let profView = ProfileViewController()
+        navigationController?.pushViewController(profView, animated: true)
     }
     
     
